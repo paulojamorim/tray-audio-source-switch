@@ -26,8 +26,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #sudo apt-get install libgtk-3-dev libgirepository1.0-dev
 #pip install PyGObject
 #sudo apt-get install gir1.2-appindicator3-0.1
+
 import re
 import subprocess
+import gi
+gi.require_version('AppIndicator3', '0.1') 
+gi.require_version('Gtk', '3.0')
+
 from gi.repository import Gtk, GLib
 from gi.repository import AppIndicator3 as appindicator
 
@@ -87,13 +92,13 @@ class SoundSources():
 class Indicator():
 
     def __init__(self):
-        self.ind = ind = appindicator.Indicator.new("cricket-indicator","" ,\
+        self.ind = ind = appindicator.Indicator.new("sound-source-indicator","" ,\
                 appindicator.IndicatorCategory.APPLICATION_STATUS)
         f = '/usr/share/icons/ubuntu-mono-dark/status/22/indicator-keyboard-Ur-3.svg'
-        ind.set_title("teste")
+        #ind.set_title("teste")
         ind.set_status (appindicator.IndicatorStatus.ACTIVE)
-        ind.set_attention_icon("indicator-messages-new")
-        ind.set_icon(f)
+        #ind.set_attention_icon("indicator-messages-new")
+        ind.set_icon_full(f,"Sound source indicator icon")
 
         self.sources = sources = SoundSources()
         sources_description = sources.GetSourcesDescription()
@@ -105,7 +110,7 @@ class Indicator():
             if menus != []:
                 menu_items = Gtk.RadioMenuItem(label=str(sd), group=self.menus[0])
             else:
-                menu_items = Gtk.RadioMenuItem(sd)
+                menu_items = Gtk.RadioMenuItem(label=sd)
 
             menus.append(menu_items)
             menu.append(menu_items)
