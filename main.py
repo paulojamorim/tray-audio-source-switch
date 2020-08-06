@@ -44,37 +44,6 @@ class SoundSources():
     def __init__(self):
         pass
 
-    def GetActiveSourceIndex(self):
-        out = subprocess.Popen(['pacmd','list-sinks'],\
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        stdout,stderr = out.communicate()
-        lines = stdout.decode("utf-8").split("\n")
-
-        index = None
-        for l in lines:
-            if '*' in l:
-                index = re.findall(r'\d+',l)[-1]
-                break
-
-        return index
-
-    def GetSourcesDescription(self):
-        out = subprocess.Popen(['pacmd','list-sinks'],\
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        stdout,stderr = out.communicate()
-        lines = stdout.decode("utf-8").split("\n")
-        
-        sources = []
-
-        for l in lines:
-            if 'device.description' in l:
-
-                description = l.split("device.description = ")[-1]
-                description = description.replace('"','')
-                sources.append(description)
-
-        return sources
-
 
     def GetSources(self):
         out = subprocess.Popen(['pacmd','list-sinks'],\
@@ -125,24 +94,15 @@ class SoundSources():
         return sources
 
 
-    def GetSourcesIndex(self):
-        out = subprocess.Popen(['pactl','list','sinks','short'],\
+
+    def SetActiveSource(self, port, device_name):
+
+        out = subprocess.Popen(['pacmd','set-default-sink',port],\
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout,stderr = out.communicate()
-        lines = stdout.decode("utf-8").split("\n")
-        
-        sources = []
 
-        for l in lines:
-            index = re.findall(r'\d+',l)
-            if index != []:
-                sources.append(index[0])
-
-        return sources
-
-    def SetActiveSource(self, index):
-        out = subprocess.Popen(['pacmd','set-default-sink',index],\
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        out = subprocess.Popen(['pacmd','set-sink-port', port, device_name],\
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout,stderr = out.communicate()
 
 
@@ -163,21 +123,36 @@ class Indicator():
         #ind.set_attention_icon("indicator-messages-new")
         ind.set_icon_full(folder + line_out,"Sound source indicator icon")
 
-        self.sources = sources = SoundSources()
-        sources_description = sources.GetSourcesDescription()
+        # Take audio sources
+        source =  self.source = SoundSources()
+        sources = source.GetSources()
         
+        devices_items = self.devices_items = []
+
+        for dev in sources.keys():
+            for port in sources[dev]["ports"].keys():
+                devices_items.append((dev, sources[dev]["active"], port,\
+                        sources[dev]["ports"][port]["description"], 
+                        sources[dev]["active_port"]))
+                
+                #print((dev, sources[dev]["active"], port,\
+                #        sources[dev]["ports"][port]["description"], 
+                #        sources[dev]["active_port"]))
+
+        # Create menu etc
         menu = Gtk.Menu()
         self.menus = menus = []
         
-        for id_, sd in enumerate(sources_description):
+        for id_, sd in enumerate(devices_items):
             if menus != []:
-                menu_items = Gtk.RadioMenuItem(label=str(sd), group=self.menus[0])
+                menu_items = Gtk.RadioMenuItem(label=str(devices_items[id_][3]),\
+                        group=self.menus[0])
             else:
-                menu_items = Gtk.RadioMenuItem(label=sd)
+                menu_items = Gtk.RadioMenuItem(label=devices_items[id_][3])
 
             menus.append(menu_items)
+            
             menu.append(menu_items)
-
             menu_items.connect("activate", self.OnClickItem, id_)
             menu_items.show()
 
@@ -187,21 +162,18 @@ class Indicator():
 
 
     def OnClickItem(self, widget,_id):
-        index = self.sources.GetSourcesIndex()[_id]
-        self.sources.SetActiveSource(index)
+        if widget.get_active():
+            device = self.devices_items[_id]
+            
+            #self.sound_source
+            #print(device,"\n")
+            #print(device[0],device[2])
+            self.source.SetActiveSource(device[0],device[2])
 
+            #self.sources.SetActiveSource(index)
+            #self.menus[_id].set_active(True)
+        return True
 
 if __name__ == "__main__":
 
-    #ind = Indicator()
-
-    s = SoundSources()
-    sources = s.GetSources()
-
-    for dev in sources.keys():
-        if sources[dev]["active"] == True:
-            for port in sources[dev]["ports"].keys():
-                print(port)
-
-    print("\n\n")
-    print(sources)
+    ind = Indicator()
