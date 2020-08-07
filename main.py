@@ -111,17 +111,8 @@ class Indicator():
 
     def __init__(self):
         self.ind = ind = appindicator.Indicator.new("sound-source-indicator","" ,\
-                appindicator.IndicatorCategory.APPLICATION_STATUS)
-        
-        folder = "/usr/share/icons/HighContrast/22x22/devices/"
-        head_phone = "headphones.png" 
-        line_out = "audio-card.png"
-        hdmi_dp = "video-display.png"
-
-        #ind.set_title("teste")
+                appindicator.IndicatorCategory.APPLICATION_STATUS) 
         ind.set_status (appindicator.IndicatorStatus.ACTIVE)
-        #ind.set_attention_icon("indicator-messages-new")
-        ind.set_icon_full(folder + line_out,"Sound source indicator icon")
 
         # Take audio sources
         source =  self.source = SoundSources()
@@ -135,9 +126,9 @@ class Indicator():
                         sources[dev]["ports"][port]["description"], 
                         sources[dev]["active_port"]))
                 
-                #print((dev, sources[dev]["active"], port,\
-                #        sources[dev]["ports"][port]["description"], 
-                #        sources[dev]["active_port"]))
+                print((dev, sources[dev]["active"], port,\
+                        sources[dev]["ports"][port]["description"], 
+                        sources[dev]["active_port"]))
 
         # Create menu etc
         menu = Gtk.Menu()
@@ -150,9 +141,17 @@ class Indicator():
             else:
                 menu_items = Gtk.RadioMenuItem(label=devices_items[id_][3])
 
-            menus.append(menu_items)
-            
+            menus.append(menu_items)            
             menu.append(menu_items)
+
+        
+            if (devices_items[id_][1] == True) and\
+                    (devices_items[id_][2] == devices_items[id_][4]):
+                        widget = menus[id_]
+                        widget.set_active(True)
+                        self.SetIcon(widget, self.devices_items[id_][3])
+
+
             menu_items.connect("activate", self.OnClickItem, id_)
             menu_items.show()
 
@@ -160,18 +159,27 @@ class Indicator():
 
         Gtk.main()
 
+    def SetIcon(self, widget, description):
+
+        folder = "/usr/share/icons/HighContrast/22x22/devices/"
+        head_phone = "headphones.png" 
+        line_out = "audio-card.png"
+        hdmi_dp = "video-display.png"
+
+        if "HDMI" in description:
+            icon = hdmi_dp
+        elif "Headphone" in description:
+            icon = head_phone
+        else:
+            icon = line_out
+
+        self.ind.set_icon_full(folder + icon,"Sound source indicator icon")
 
     def OnClickItem(self, widget,_id):
         if widget.get_active():
             device = self.devices_items[_id]
-            
-            #self.sound_source
-            #print(device,"\n")
-            #print(device[0],device[2])
             self.source.SetActiveSource(device[0],device[2])
-
-            #self.sources.SetActiveSource(index)
-            #self.menus[_id].set_active(True)
+            self.SetIcon(widget, device[3]) 
         return True
 
 if __name__ == "__main__":
