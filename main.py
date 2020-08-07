@@ -111,7 +111,7 @@ class Indicator():
 
     def __init__(self):
         self.ind = ind = appindicator.Indicator.new("sound-source-indicator","" ,\
-                appindicator.IndicatorCategory.APPLICATION_STATUS) 
+                appindicator.IndicatorCategory.HARDWARE) 
         ind.set_status (appindicator.IndicatorStatus.ACTIVE)
 
         # Take audio sources
